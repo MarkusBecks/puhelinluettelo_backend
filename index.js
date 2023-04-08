@@ -1,9 +1,15 @@
 const express = require('express');
 const app = express();
 const morgan = require('morgan');
+const cors = require('cors');
+
+morgan.token('body', req => {
+    return JSON.stringify(req.body);
+});
 
 app.use(express.json());
 app.use(morgan(':method :url :status :res[content-length] - :response-time ms :body'));
+app.use(cors());
 
 let persons = [
     {
@@ -45,13 +51,19 @@ app.get('/api/persons/:id', (req, res) => {
 
 const generateId = () => {
     const random = Math.floor(Math.random() * 9999999999999);
-    console.log(random);
     return random;
 }
 
 app.post('/api/persons', (req, res) => {
     const body = req.body;
-    const nameExists = persons.find(person => person.name === body.name)
+
+    if (!body) {
+        return res.status(400).json({
+            error: 'content missing'
+        })
+    }
+
+    const nameExists = persons.find(person => person.name === body.name);
 
     if (!body.name) {
         return res.status(400).json({
@@ -73,10 +85,6 @@ app.post('/api/persons', (req, res) => {
         number: body.number
     }
     res.json(person);
-
-    morgan.token('body', req => {
-        return JSON.stringify(req.body);
-    });
 })
 
 app.get('/info', (req, res) => {
